@@ -1,23 +1,151 @@
-# Compiled class file
-*.class
+######################
+# Project Specific
+######################
+.recommenders/**
+.metadata/**
+Servers/**
 
-# Log file
+/**/version.txt*
+#####################
+# SSH-KEY
+#####################
+/*.pub
+
+######################
+# Node
+######################
+/node/**
+/node_modules/**
+
+######################
+# SASS
+######################
+.sass-cache/**
+
+######################
+# Eclipse
+######################
+*.pydevproject
+.project
+.metadata
+/bin/**
+/tmp/**
+/tmp/**/*
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.classpath
+.settings
+.settings/**
+.loadpath
+/src/main/resources/rebel.xml
+
+# External tool builders
+.externalToolBuilders/**
+
+# Locally stored "Eclipse launch configurations"
+*.launch
+
+# CDT-specific
+.cproject
+
+# PDT-specific
+.buildpath
+
+######################
+# Intellij
+######################
+.idea
+.idea/*
+.idea/*/*
+*.iml
+*.iws
+*.ipr
+*.ids
+*.orig
+
+######################
+# Maven
+######################
+/log/**
+/**/target/**
+
+######################
+# Gradle
+######################
+.gradle/**
+
+######################
+# Package Files
+######################
+#*.jar
+*.war
+*.ear
+*.db
+!lib/*.jar
+!lib/**/*.jar
+
+
+######################
+# Windows
+######################
+# Windows image file caches
+Thumbs.db
+
+# Folder config file
+Desktop.ini
+
+######################
+# Mac OSX
+######################
+.DS_Store
+.svn
+
+# Thumbnails
+._*
+
+# Files that might appear on external disk
+.Spotlight-V100
+.Trashes
+
+######################
+# Directories
+######################
+/build/**
+/bin/**
+/spring_loaded/**
+/deploy/**
+
+######################
+# Logs
+################f######
 *.log
 
-# BlueJ files
-*.ctxt
+######################
+# Others
+######################
+*.class
+*.*~
+*~
+.merge_file*
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
+######################
+# Gradle Wrapper
+######################
+!gradle/wrapper/gradle-wrapper.jar
 
-# Package Files #
-*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
+######################
+# Maven Wrapper
+######################
+!.mvn/wrapper/maven-wrapper.jar
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
+######################
+# codemagic-factory
+######################
+/codemagic-factory/**
+logs/**
+
+
+.cache-main
