@@ -8,22 +8,56 @@
   <artifactId>flink-app-jobs</artifactId>
   <version>1.0-SNAPSHOT</version>
 
+  <properties>
+    <flink.version>1.5.3</flink.version>
+    <scala.build.version>2.11.12</scala.build.version>
+    <scala.binary.version>2.11</scala.binary.version>
+    <elasticsearch.version>6.3.2</elasticsearch.version>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-core</artifactId>
-      <version>1.5.3</version>
+      <version>${flink.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-streaming-scala_2.11</artifactId>
-      <version>1.5.3</version>
+      <version>${flink.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-connector-kafka-0.10_2.11</artifactId>
-      <version>1.5.3</version>
+      <version>${flink.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-connector-filesystem_${scala.binary.version}</artifactId>
+      <version>${flink.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.elasticsearch</groupId>
+      <artifactId>elasticsearch</artifactId>
+      <version>${elasticsearch.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.elasticsearch.client</groupId>
+      <artifactId>transport</artifactId>
+      <version>${elasticsearch.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.elasticsearch.plugin</groupId>
+      <artifactId>transport-netty4-client</artifactId>
+      <version>${elasticsearch.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.elasticsearch.client</groupId>
+      <artifactId>elasticsearch-rest-high-level-client</artifactId>
+      <version>${elasticsearch.version}</version>
+    </dependency>
+
     <dependency>
       <groupId>com.alibaba</groupId>
       <artifactId>fastjson</artifactId>
@@ -52,25 +86,36 @@
       </plugins>
     </pluginManagement>
     <plugins>
-      <!--
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
+        <groupId>net.alchim31.maven</groupId>
+        <artifactId>scala-maven-plugin</artifactId>
+        <version>3.3.2</version>
         <configuration>
-          <classesDirectory>target/classes/</classesDirectory>
-          <archive>
-            <manifest>
-              <mainClass>org.shirdrn.flink.broadcaststate.UserPurchaseBehaviorTracker</mainClass>
-              <useUniqueVersions>false</useUniqueVersions>
-              <addClasspath>true</addClasspath>
-            </manifest>
-            <manifestEntries>
-              <Class-Path>.</Class-Path>
-            </manifestEntries>
-          </archive>
+          <scalaVersion>${scala.build.version}</scalaVersion>
+          <recompileMode>incremental</recompileMode>
+          <javacArgs>
+            <javacArg>-Xlint:unchecked</javacArg>
+            <javacArg>-Xlint:deprecation</javacArg>
+          </javacArgs>
         </configuration>
+        <executions>
+          <execution>
+            <id>scala-compile-first</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>add-source</goal>
+              <goal>compile</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>scala-test-compile</id>
+            <phase>process-test-resources</phase>
+            <goals>
+              <goal>testCompile</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
-      -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
@@ -114,7 +159,7 @@
               </filters>
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <mainClass>org.shirdrn.flink.broadcaststate.UserPurchaseBehaviorTracker</mainClass>
+                  <mainClass>org.shirdrn.flink.jobs.batch.ImportHDFSDataToES</mainClass>
                 </transformer>
               </transformers>
             </configuration>

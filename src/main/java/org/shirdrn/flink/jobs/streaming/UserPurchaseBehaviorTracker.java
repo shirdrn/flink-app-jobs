@@ -1,4 +1,4 @@
-package org.shirdrn.flink.broadcaststate;
+package org.shirdrn.flink.jobs.streaming;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -7,9 +7,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import org.apache.flink.streaming.api.functions.timestamps.BoundedOutOfOrdernessTimestampExtractor;
-import org.apache.flink.streaming.api.windowing.time.Time;
-import org.apache.log4j.Logger;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.api.common.state.BroadcastState;
@@ -33,9 +30,17 @@ import org.apache.flink.streaming.api.environment.CheckpointConfig;
 import org.apache.flink.streaming.api.environment.CheckpointConfig.ExternalizedCheckpointCleanup;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.co.KeyedBroadcastProcessFunction;
+import org.apache.flink.streaming.api.functions.timestamps.BoundedOutOfOrdernessTimestampExtractor;
+import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer010;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer010;
 import org.apache.flink.util.Collector;
+import org.apache.log4j.Logger;
+import org.shirdrn.flink.broadcaststate.Config;
+import org.shirdrn.flink.broadcaststate.EvaluatedResult;
+import org.shirdrn.flink.broadcaststate.EvaluatedResultSchema;
+import org.shirdrn.flink.broadcaststate.EventType;
+import org.shirdrn.flink.broadcaststate.UserEvent;
 
 // ./bin/kafka-topics.sh --zookeeper 172.23.4.138:2181,172.23.4.139:2181,172.23.4.140:2181/kafka --create --topic user_events --replication-factor 1 --partitions 1
 // ./bin/kafka-topics.sh --zookeeper 172.23.4.138:2181,172.23.4.139:2181,172.23.4.140:2181/kafka --create --topic app_config --replication-factor 1 --partitions 1
@@ -131,7 +136,7 @@ public class UserPurchaseBehaviorTracker {
         .process(new ConnectedBroadcastProcessFuntion());
     connectedStream.addSink(kafkaProducer);
 
-    env.execute();
+    env.execute("UserPurchaseBehaviorTracker");
   }
 
   // (userId, userEvent, config, evaluatedResult)
@@ -144,7 +149,7 @@ public class UserPurchaseBehaviorTracker {
       super();
     }
 
-    // (channel, Map<uid, List<userEvent>>)
+    // (channel, Map<uid, UserEventContainer>)
     private final MapStateDescriptor<String, Map<String, UserEventContainer>> userMapStateDesc =
         new MapStateDescriptor<>(
             "userEventContainerState",
