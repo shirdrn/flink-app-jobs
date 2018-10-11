@@ -22,7 +22,7 @@ public class ImportHDFSDataToES {
 
   private static final Logger LOG = Logger.getLogger(ImportHDFSDataToES.class);
 
-  // --input-path hdfs://namenode01.td.com/tmp/data --http-hosts 172.23.4.141 --http-port 9200 --es-index a_multi_val --es-type a_my_type
+  // --input-path hdfs://namenode01.td.com/tmp/data --es-http-hosts 172.23.4.141 --es-http-port 9200 --es-index a_multi_val --es-type a_my_type
   public static void main(String[] args) throws Exception {
     LOG.info("Input params: " + Arrays.asList(args));
     final ParameterTool parameterTool = ParameterTool.fromArgs(args);
@@ -30,8 +30,8 @@ public class ImportHDFSDataToES {
       System.out.println("Missing parameters!\n" +
           "Usage: batch " +
           "--input-path <hdfsFile> " +
-          "--http-hosts <esHttpHosts> " +
-          "--http-port <esHttpPort> " +
+          "--es-http-hosts <esHttpHosts> " +
+          "--es-http-port <esHttpPort> " +
           "--es-index <esIndex> " +
           "--es-type <esType> " +
           "--bulk-flush-interval-millis <bulkFlushIntervalMillis>" +
@@ -59,18 +59,18 @@ public class ImportHDFSDataToES {
       }
     };
 
-    String ipAddress = parameterTool.getRequired("http-hosts");
-    LOG.info("Config: httpHosts=" + ipAddress);
-    int port = parameterTool.getInt("http-port", 9200);
-    LOG.info("Config: httpPort=" + port);
+    String esHttpHosts = parameterTool.getRequired("es-http-hosts");
+    LOG.info("Config: esHttpHosts=" + esHttpHosts);
+    int esHttpPort = parameterTool.getInt("es-http-port", 9200);
+    LOG.info("Config: esHttpPort=" + esHttpPort);
 
-    final List<HttpHost> httpHosts = Arrays.asList(ipAddress.split(","))
+    final List<HttpHost> httpHosts = Arrays.asList(esHttpHosts.split(","))
             .stream()
-            .map(host -> new HttpHost(ipAddress, port, "http"))
+            .map(host -> new HttpHost(host, esHttpPort, "http"))
             .collect(Collectors.toList());
 
     int bulkFlushMaxSizeMb = parameterTool.getInt("bulk-flush-max-size-mb", 10);
-    int bulkFlushIntervalMillis = parameterTool.getInt("bulk-flush-max-actions", 10 * 1000);
+    int bulkFlushIntervalMillis = parameterTool.getInt("bulk-flush-interval-millis", 10 * 1000);
     int bulkFlushMaxActions = parameterTool.getInt("bulk-flush-max-actions", 1);
 
     final ElasticsearchOutputFormat outputFormat = new Builder<>(httpHosts, elasticsearchSinkFunction)

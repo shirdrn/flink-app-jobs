@@ -102,7 +102,7 @@ public abstract class AbstractElasticsearchOutputFormat<T, C extends AutoCloseab
 	private final ElasticsearchSinkFunction<T> elasticsearchSinkFunction;
 
 	/** User-provided handler for failed {@link ActionRequest ActionRequests}. */
-	private final ActionRequestFailureHandler failureHandler;
+	private final DocWriteRequestFailureHandler failureHandler;
 
 	/** Provided to the user via the {@link ElasticsearchSinkFunction} to add {@link ActionRequest ActionRequests}. */
 	private transient RequestIndexer requestIndexer;
@@ -123,7 +123,7 @@ public abstract class AbstractElasticsearchOutputFormat<T, C extends AutoCloseab
 	/**
 	 * This is set from inside the {@link BulkProcessor.Listener} if a {@link Throwable} was thrown in callbacks and
 	 * the user considered it should fail the sink via the
-	 * {@link ActionRequestFailureHandler#onFailure(DocWriteRequest, Throwable, int, RequestIndexer)} method.
+	 * {@link DocWriteRequestFailureHandler#onFailure(DocWriteRequest, Throwable, int, RequestIndexer)} method.
 	 *
 	 * <p>Errors will be checked and rethrown before processing each input element, and when the sink is closed.
 	 */
@@ -133,7 +133,7 @@ public abstract class AbstractElasticsearchOutputFormat<T, C extends AutoCloseab
 		ElasticsearchApiCallBridge callBridge,
 		Map<String, String> userConfig,
 		ElasticsearchSinkFunction<T> elasticsearchSinkFunction,
-		ActionRequestFailureHandler failureHandler) {
+		DocWriteRequestFailureHandler failureHandler) {
 
 		this.callBridge = checkNotNull(callBridge);
 		this.elasticsearchSinkFunction = checkNotNull(elasticsearchSinkFunction);
@@ -148,7 +148,7 @@ public abstract class AbstractElasticsearchOutputFormat<T, C extends AutoCloseab
 				"The object probably contains or references non-serializable fields.");
 
 		checkArgument(InstantiationUtil.isSerializable(failureHandler),
-			"The implementation of the provided ActionRequestFailureHandler is not serializable. " +
+			"The implementation of the provided DocWriteRequestFailureHandler is not serializable. " +
 				"The object probably contains or references non-serializable fields.");
 
 		// extract and remove bulk processor related configuration from the user-provided config,

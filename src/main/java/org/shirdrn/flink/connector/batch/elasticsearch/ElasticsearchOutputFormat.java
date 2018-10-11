@@ -24,9 +24,8 @@ public class ElasticsearchOutputFormat<T> extends AbstractElasticsearchOutputFor
       Map<String, String> bulkRequestsConfig,
       List<HttpHost> httpHosts,
       ElasticsearchSinkFunction<T> elasticsearchSinkFunction,
-      ActionRequestFailureHandler failureHandler,
+      DocWriteRequestFailureHandler failureHandler,
       RestClientFactory restClientFactory) {
-
     super(new Elasticsearch6ApiCallBridge(httpHosts, restClientFactory),  bulkRequestsConfig, elasticsearchSinkFunction, failureHandler);
   }
 
@@ -47,7 +46,7 @@ public class ElasticsearchOutputFormat<T> extends AbstractElasticsearchOutputFor
     private final ElasticsearchSinkFunction<T> elasticsearchSinkFunction;
 
     private Map<String, String> bulkRequestsConfig = new HashMap<>();
-    private ActionRequestFailureHandler failureHandler = new NoOpFailureHandler();
+    private DocWriteRequestFailureHandler failureHandler = new NoOpFailureHandler();
     private RestClientFactory restClientFactory = restClientBuilder -> {};
 
     /**
@@ -70,7 +69,7 @@ public class ElasticsearchOutputFormat<T> extends AbstractElasticsearchOutputFor
       Preconditions.checkArgument(
           numMaxActions > 0,
           "Max number of buffered actions must be larger than 0.");
-
+      LOG.info("Builder config: bulkFlushMaxActions=" + numMaxActions);
       this.bulkRequestsConfig.put(CONFIG_KEY_BULK_FLUSH_MAX_ACTIONS, String.valueOf(numMaxActions));
       return this;
     }
@@ -160,7 +159,7 @@ public class ElasticsearchOutputFormat<T> extends AbstractElasticsearchOutputFor
      *
      * @param failureHandler This is used to handle failed {@link ActionRequest}.
      */
-    public Builder setFailureHandler(ActionRequestFailureHandler failureHandler) {
+    public Builder setFailureHandler(DocWriteRequestFailureHandler failureHandler) {
       LOG.info("Builder config: failureHandler=" + failureHandler);
       this.failureHandler = Preconditions.checkNotNull(failureHandler);
       return this;
@@ -188,10 +187,10 @@ public class ElasticsearchOutputFormat<T> extends AbstractElasticsearchOutputFor
   }
 
   /**
-   * An {@link ActionRequestFailureHandler} that simply fails the sink on any failures.
+   * An {@link DocWriteRequestFailureHandler} that simply fails the sink on any failures.
    */
   @Internal
-  private static class NoOpFailureHandler implements ActionRequestFailureHandler {
+  private static class NoOpFailureHandler implements DocWriteRequestFailureHandler {
 
     private static final long serialVersionUID = 737941343410827885L;
 

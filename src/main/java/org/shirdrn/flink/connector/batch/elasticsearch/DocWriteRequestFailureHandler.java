@@ -23,18 +23,18 @@ import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.DocWriteRequest;
 
 /**
- * An implementation of {@link ActionRequestFailureHandler} is provided by the user to define how failed
- * {@link ActionRequest ActionRequests} should be handled, e.g. dropping them, reprocessing malformed documents, or
+ * An implementation of {@link DocWriteRequestFailureHandler} is provided by the user to define how failed
+ * {@link DocWriteRequest DocWriteRequests} should be handled, e.g. dropping them, reprocessing malformed documents, or
  * simply requesting them to be sent to Elasticsearch again if the failure is only temporary.
  *
  * <p>Example:
  *
  * <pre>{@code
  *
- *	private static class ExampleActionRequestFailureHandler implements ActionRequestFailureHandler {
+ *	private static class ExampleActionRequestFailureHandler implements DocWriteRequestFailureHandler {
  *
  *		@Override
- *		void onFailure(ActionRequest action, Throwable failure, int restStatusCode, RequestIndexer indexer) throws Throwable {
+ *		void onFailure(DocWriteRequest action, Throwable failure, int restStatusCode, RequestIndexer indexer) throws Throwable {
  *			if (ExceptionUtils.containsThrowable(failure, EsRejectedExecutionException.class)) {
  *				// full queue; re-add document for indexing
  *				indexer.add(action);
@@ -58,7 +58,7 @@ import org.elasticsearch.action.DocWriteRequest;
  * and only differ in the failure message). In this case, it is recommended to match on the provided REST status code.
  */
 @PublicEvolving
-public interface ActionRequestFailureHandler extends Serializable {
+public interface DocWriteRequestFailureHandler extends Serializable {
 
 	/**
 	 * Handle a failed {@link DocWriteRequest}.
