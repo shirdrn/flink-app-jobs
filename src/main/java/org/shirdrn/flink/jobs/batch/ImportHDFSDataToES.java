@@ -1,8 +1,10 @@
 package org.shirdrn.flink.jobs.batch;
 
 import com.alibaba.fastjson.JSONObject;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.apache.flink.api.common.functions.RuntimeContext;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.utils.ParameterTool;
@@ -10,6 +12,7 @@ import org.apache.http.HttpHost;
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.Requests;
+import org.shirdrn.flink.connector.batch.elasticsearch.ElasticsearchApiCallBridge;
 import org.shirdrn.flink.connector.batch.elasticsearch.ElasticsearchOutputFormat;
 import org.shirdrn.flink.connector.batch.elasticsearch.ElasticsearchOutputFormat.Builder;
 import org.shirdrn.flink.connector.batch.elasticsearch.ElasticsearchSinkFunction;
@@ -26,41 +29,58 @@ public class ImportHDFSDataToES {
     if (parameterTool.getNumberOfParameters() < 5) {
       System.out.println("Missing parameters!\n" +
           "Usage: batch " +
-          "--input-path <hdfs file> " +
-          "--http-hosts <es http hosts> " +
-          "--http-port <es http port> " +
-          "--es-index <es index> " +
-          "--es-type <es type> " +
+          "--input-path <hdfsFile> " +
+          "--http-hosts <esHttpHosts> " +
+          "--http-port <esHttpPort> " +
+          "--es-index <esIndex> " +
+          "--es-type <esType> " +
+          "--bulk-flush-interval-millis <bulkFlushIntervalMillis>" +
+          "--bulk-flush-max-size-mb <bulkFlushMaxSizeMb>" +
           "--bulk-flush-max-actions <bulkFlushMaxActions>");
       return;
     }
 
     String file = parameterTool.getRequired("input-path");
 
-    final ElasticsearchSinkFunction<String> elasticsearchSinkFunction =
-        new ElasticsearchSinkFunction<String>() {
+    final ElasticsearchSinkFunction<String> elasticsearchSinkFunction = new ElasticsearchSinkFunction<String>() {
+
       @Override
       public void process(String element, RuntimeContext ctx, RequestIndexer indexer) {
         indexer.add(createIndexRequest(element, parameterTool));
       }
+
+      private IndexRequest createIndexRequest(String element, ParameterTool parameterTool) {
+        LOG.info("Create index req: " + element);
+        JSONObject o = JSONObject.parseObject(element);
+        return Requests.indexRequest()
+                .index(parameterTool.getRequired("es-index"))
+                .type(parameterTool.getRequired("es-type"))
+                .source(o);
+      }
     };
-    ArrayList<HttpHost> httpHosts = new ArrayList<>();
+
     String ipAddress = parameterTool.getRequired("http-hosts");
     LOG.info("Config: httpHosts=" + ipAddress);
     int port = parameterTool.getInt("http-port", 9200);
     LOG.info("Config: httpPort=" + port);
-    httpHosts.add(new HttpHost(ipAddress, port, "http"));
 
-    int bulkFlushMaxActions = 1;
-    if (parameterTool.has("bulk-flush-max-actions")) {
-      bulkFlushMaxActions = parameterTool.getInt("bulk-flush-max-actions");
-    }
-    LOG.info("Config: bulkFlushMaxActions=" + bulkFlushMaxActions);
+    final List<HttpHost> httpHosts = Arrays.asList(ipAddress.split(","))
+            .stream()
+            .map(host -> new HttpHost(ipAddress, port, "http"))
+            .collect(Collectors.toList());
 
-    final Builder<String> builder =
-        new Builder<>(httpHosts, elasticsearchSinkFunction);
-    builder.setBulkFlushMaxActions(bulkFlushMaxActions);
-    ElasticsearchOutputFormat outputFormat = builder.build();
+    int bulkFlushMaxSizeMb = parameterTool.getInt("bulk-flush-max-size-mb", 10);
+    int bulkFlushIntervalMillis = parameterTool.getInt("bulk-flush-max-actions", 10 * 1000);
+    int bulkFlushMaxActions = parameterTool.getInt("bulk-flush-max-actions", 1);
+
+    final ElasticsearchOutputFormat outputFormat = new Builder<>(httpHosts, elasticsearchSinkFunction)
+            .setBulkFlushBackoff(true)
+            .setBulkFlushBackoffRetries(2)
+            .setBulkFlushBackoffType(ElasticsearchApiCallBridge.FlushBackoffType.EXPONENTIAL)
+            .setBulkFlushMaxSizeMb(bulkFlushMaxSizeMb)
+            .setBulkFlushInterval(bulkFlushIntervalMillis)
+            .setBulkFlushMaxActions(bulkFlushMaxActions)
+            .build();
 
     ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
     env.readTextFile(file)
@@ -70,14 +90,5 @@ public class ImportHDFSDataToES {
 
     final String jobName = ImportHDFSDataToES.class.getSimpleName();
     env.execute(jobName);
-  }
-
-  private static IndexRequest createIndexRequest(String element, ParameterTool parameterTool) {
-    LOG.info("Create index req: " + element);
-    JSONObject o = JSONObject.parseObject(element);
-    return Requests.indexRequest()
-        .index(parameterTool.getRequired("es-index"))
-        .type(parameterTool.getRequired("es-type"))
-        .source(o);
   }
 }

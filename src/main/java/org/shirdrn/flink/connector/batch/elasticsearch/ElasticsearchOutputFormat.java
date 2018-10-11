@@ -3,12 +3,15 @@ package org.shirdrn.flink.connector.batch.elasticsearch;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.flink.annotation.Internal;
 import org.apache.flink.annotation.PublicEvolving;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.util.Preconditions;
 import org.apache.http.HttpHost;
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.ActionRequest;
+import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.shirdrn.flink.connector.batch.elasticsearch.ElasticsearchApiCallBridge.FlushBackoffType;
 
@@ -63,12 +66,13 @@ public class ElasticsearchOutputFormat<T> extends AbstractElasticsearchOutputFor
      *
      * @param numMaxActions the maxinum number of actions to buffer per bulk request.
      */
-    public void setBulkFlushMaxActions(int numMaxActions) {
+    public Builder setBulkFlushMaxActions(int numMaxActions) {
       Preconditions.checkArgument(
           numMaxActions > 0,
           "Max number of buffered actions must be larger than 0.");
 
       this.bulkRequestsConfig.put(CONFIG_KEY_BULK_FLUSH_MAX_ACTIONS, String.valueOf(numMaxActions));
+      return this;
     }
 
     /**
@@ -76,12 +80,13 @@ public class ElasticsearchOutputFormat<T> extends AbstractElasticsearchOutputFor
      *
      * @param maxSizeMb the maximum size of buffered actions, in mb.
      */
-    public void setBulkFlushMaxSizeMb(int maxSizeMb) {
+    public Builder setBulkFlushMaxSizeMb(int maxSizeMb) {
       Preconditions.checkArgument(
           maxSizeMb > 0,
           "Max size of buffered actions must be larger than 0.");
-
+      LOG.info("Builder config: bulkFlushMaxSizeMb=" + maxSizeMb);
       this.bulkRequestsConfig.put(CONFIG_KEY_BULK_FLUSH_MAX_SIZE_MB, String.valueOf(maxSizeMb));
+      return this;
     }
 
     /**
@@ -89,12 +94,13 @@ public class ElasticsearchOutputFormat<T> extends AbstractElasticsearchOutputFor
      *
      * @param intervalMillis the bulk flush interval, in milliseconds.
      */
-    public void setBulkFlushInterval(long intervalMillis) {
+    public Builder setBulkFlushInterval(long intervalMillis) {
       Preconditions.checkArgument(
           intervalMillis >= 0,
           "Interval (in milliseconds) between each flush must be larger than or equal to 0.");
-
+      LOG.info("Builder config: bulkFlushInterval=" + intervalMillis);
       this.bulkRequestsConfig.put(CONFIG_KEY_BULK_FLUSH_INTERVAL_MS, String.valueOf(intervalMillis));
+      return this;
     }
 
     /**
@@ -102,8 +108,10 @@ public class ElasticsearchOutputFormat<T> extends AbstractElasticsearchOutputFor
      *
      * @param enabled whether or not to enable backoffs.
      */
-    public void setBulkFlushBackoff(boolean enabled) {
+    public Builder setBulkFlushBackoff(boolean enabled) {
+      LOG.info("Builder config: bulkFlushBackoff=" + enabled);
       this.bulkRequestsConfig.put(CONFIG_KEY_BULK_FLUSH_BACKOFF_ENABLE, String.valueOf(enabled));
+      return this;
     }
 
     /**
@@ -111,10 +119,12 @@ public class ElasticsearchOutputFormat<T> extends AbstractElasticsearchOutputFor
      *
      * @param flushBackoffType the backoff type to use.
      */
-    public void setBulkFlushBackoffType(FlushBackoffType flushBackoffType) {
+    public Builder setBulkFlushBackoffType(FlushBackoffType flushBackoffType) {
+      LOG.info("Builder config: bulkFlushBackoffType=" + flushBackoffType);
       this.bulkRequestsConfig.put(
           CONFIG_KEY_BULK_FLUSH_BACKOFF_TYPE,
           Preconditions.checkNotNull(flushBackoffType).toString());
+      return this;
     }
 
     /**
@@ -122,12 +132,13 @@ public class ElasticsearchOutputFormat<T> extends AbstractElasticsearchOutputFor
      *
      * @param maxRetries the maximum number of retries for a backoff attempt when flushing bulk requests
      */
-    public void setBulkFlushBackoffRetries(int maxRetries) {
+    public Builder setBulkFlushBackoffRetries(int maxRetries) {
       Preconditions.checkArgument(
           maxRetries > 0,
           "Max number of backoff attempts must be larger than 0.");
-
+      LOG.info("Builder config: bulkFlushBackoffRetries=" + maxRetries);
       this.bulkRequestsConfig.put(CONFIG_KEY_BULK_FLUSH_BACKOFF_RETRIES, String.valueOf(maxRetries));
+      return this;
     }
 
     /**
@@ -135,11 +146,13 @@ public class ElasticsearchOutputFormat<T> extends AbstractElasticsearchOutputFor
      *
      * @param delayMillis the amount of delay between each backoff attempt when flushing bulk requests, in milliseconds.
      */
-    public void setBulkFlushBackoffDelay(long delayMillis) {
+    public Builder setBulkFlushBackoffDelay(long delayMillis) {
       Preconditions.checkArgument(
           delayMillis >= 0,
           "Delay (in milliseconds) between each backoff attempt must be larger than or equal to 0.");
+      LOG.info("Builder config: bulkFlushBackoffDelay=" + delayMillis);
       this.bulkRequestsConfig.put(CONFIG_KEY_BULK_FLUSH_BACKOFF_DELAY, String.valueOf(delayMillis));
+      return this;
     }
 
     /**
@@ -147,8 +160,10 @@ public class ElasticsearchOutputFormat<T> extends AbstractElasticsearchOutputFor
      *
      * @param failureHandler This is used to handle failed {@link ActionRequest}.
      */
-    public void setFailureHandler(ActionRequestFailureHandler failureHandler) {
+    public Builder setFailureHandler(ActionRequestFailureHandler failureHandler) {
+      LOG.info("Builder config: failureHandler=" + failureHandler);
       this.failureHandler = Preconditions.checkNotNull(failureHandler);
+      return this;
     }
 
     /**
@@ -156,8 +171,10 @@ public class ElasticsearchOutputFormat<T> extends AbstractElasticsearchOutputFor
      *
      * @param restClientFactory the factory that configures the rest client.
      */
-    public void setRestClientFactory(RestClientFactory restClientFactory) {
+    public Builder setRestClientFactory(RestClientFactory restClientFactory) {
+      LOG.info("Builder config: restClientFactory=" + restClientFactory);
       this.restClientFactory = Preconditions.checkNotNull(restClientFactory);
+      return this;
     }
 
     /**
@@ -169,4 +186,21 @@ public class ElasticsearchOutputFormat<T> extends AbstractElasticsearchOutputFor
       return new ElasticsearchOutputFormat<>(bulkRequestsConfig, httpHosts, elasticsearchSinkFunction, failureHandler, restClientFactory);
     }
   }
+
+  /**
+   * An {@link ActionRequestFailureHandler} that simply fails the sink on any failures.
+   */
+  @Internal
+  private static class NoOpFailureHandler implements ActionRequestFailureHandler {
+
+    private static final long serialVersionUID = 737941343410827885L;
+
+    @Override
+    public void onFailure(DocWriteRequest action, Throwable failure, int restStatusCode, RequestIndexer indexer) throws Throwable {
+      // simply fail the sink
+      throw failure;
+    }
+
+  }
+
 }
