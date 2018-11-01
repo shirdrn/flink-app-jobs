@@ -18,18 +18,18 @@
 
 package org.shirdrn.flink.connector.batch.elasticsearch;
 
-import static org.apache.flink.util.Preconditions.checkNotNull;
-
 import org.apache.flink.annotation.Internal;
-import org.elasticsearch.action.ActionRequest;
+import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.update.UpdateRequest;
 
+import static org.apache.flink.util.Preconditions.checkNotNull;
+
 /**
  * Implementation of a {@link RequestIndexer}, using a {@link BulkProcessor}.
- * {@link ActionRequest ActionRequests} will be buffered before sending a bulk request to the Elasticsearch cluster.
+ * {@link DocWriteRequest DocWriteRequests} will be buffered before sending a bulk request to the Elasticsearch cluster.
  *
  * <p>Note: This class is binary compatible to Elasticsearch 6.
  */

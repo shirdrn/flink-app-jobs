@@ -17,9 +17,10 @@
 
 package org.shirdrn.flink.connector.batch.elasticsearch;
 
-import java.io.Serializable;
 import org.apache.flink.annotation.PublicEvolving;
 import org.elasticsearch.client.RestClientBuilder;
+
+import java.io.Serializable;
 
 /**
  * A factory that is used to configure the {@link org.elasticsearch.client.RestHighLevelClient} internally

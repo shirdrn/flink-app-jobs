@@ -17,13 +17,6 @@
 
 package org.shirdrn.flink.connector.batch.elasticsearch;
 
-import static org.apache.flink.util.Preconditions.checkArgument;
-import static org.apache.flink.util.Preconditions.checkNotNull;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.api.common.io.RichOutputFormat;
@@ -44,6 +37,14 @@ import org.shirdrn.flink.connector.batch.elasticsearch.ElasticsearchApiCallBridg
 import org.shirdrn.flink.connector.batch.elasticsearch.ElasticsearchApiCallBridge.FlushBackoffType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static org.apache.flink.util.Preconditions.checkArgument;
+import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
  * Base class for all Flink Elasticsearch Sinks.
@@ -98,13 +99,13 @@ public abstract class AbstractElasticsearchOutputFormat<T, C extends AutoCloseab
 	 */
 	private final Map<String, String> userConfig;
 
-	/** The function that is used to construct multiple {@link ActionRequest ActionRequests} from each incoming element. */
+	/** The function that is used to construct multiple {@link DocWriteRequest DocWriteRequests} from each incoming element. */
 	private final ElasticsearchSinkFunction<T> elasticsearchSinkFunction;
 
-	/** User-provided handler for failed {@link ActionRequest ActionRequests}. */
+	/** User-provided handler for failed {@link DocWriteRequest DocWriteRequests}. */
 	private final DocWriteRequestFailureHandler failureHandler;
 
-	/** Provided to the user via the {@link ElasticsearchSinkFunction} to add {@link ActionRequest ActionRequests}. */
+	/** Provided to the user via the {@link ElasticsearchSinkFunction} to add {@link DocWriteRequest DocWriteRequests}. */
 	private transient RequestIndexer requestIndexer;
 
 	// ------------------------------------------------------------------------
@@ -221,7 +222,6 @@ public abstract class AbstractElasticsearchOutputFormat<T, C extends AutoCloseab
 	public void writeRecord(T value) throws IOException {
 		// if bulk processor callbacks have previously reported an error, we rethrow the error and fail the sink
 		checkErrorAndRethrow();
-
 		elasticsearchSinkFunction.process(value, getRuntimeContext(), requestIndexer);
 	}
 

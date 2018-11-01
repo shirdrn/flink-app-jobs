@@ -1,9 +1,5 @@
 package org.shirdrn.flink.connector.batch.elasticsearch;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.annotation.PublicEvolving;
 import org.apache.flink.configuration.Configuration;
@@ -14,6 +10,10 @@ import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.shirdrn.flink.connector.batch.elasticsearch.ElasticsearchApiCallBridge.FlushBackoffType;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ElasticsearchOutputFormat<T> extends AbstractElasticsearchOutputFormat<T, RestHighLevelClient> {
 

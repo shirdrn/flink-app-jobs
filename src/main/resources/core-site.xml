@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<configuration>
+    <property>
+        <name>fs.defaultFS</name>
+        <value>hdfs://namenode01.td.com</value>
+    </property>
+    <property>
+        <name>ha.zookeeper.quorum</name>
+        <value>zk01.td.com:2181,zk02.td.com:2181,zk03.td.com:2181</value>
+    </property>
+    <property>
+        <name>fs.trash.interval</name>
+        <value>1440</value>
+    </property>
+</configuration>

@@ -17,10 +17,6 @@
 
 package org.shirdrn.flink.connector.batch.elasticsearch;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import javax.annotation.Nullable;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.util.Preconditions;
 import org.apache.http.HttpHost;
@@ -34,12 +30,16 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Implementation of {@link ElasticsearchApiCallBridge} for Elasticsearch 6 and later versions.
  */
 @Internal
-public class Elasticsearch6ApiCallBridge implements
-    ElasticsearchApiCallBridge<RestHighLevelClient> {
+public class Elasticsearch6ApiCallBridge implements ElasticsearchApiCallBridge<RestHighLevelClient> {
 
 	private static final long serialVersionUID = -5222683870097809633L;
 

@@ -17,10 +17,10 @@
 
 package org.shirdrn.flink.connector.batch.elasticsearch;
 
-import java.io.Serializable;
 import org.apache.flink.annotation.PublicEvolving;
-import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.DocWriteRequest;
+
+import java.io.Serializable;
 
 /**
  * An implementation of {@link DocWriteRequestFailureHandler} is provided by the user to define how failed
