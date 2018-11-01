@@ -20,6 +20,7 @@ package org.shirdrn.flink.connector.batch.hbase;
 import static org.apache.flink.util.Preconditions.checkArgument;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
+import com.google.common.base.Throwables;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,13 +33,13 @@ import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.util.InstantiationUtil;
 import org.apache.flink.util.Preconditions;
+import org.apache.flink.util.ReflectionUtil;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.BufferedMutatorParams;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
-import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,6 +57,7 @@ public class HBaseOutputFormat<T> extends RichOutputFormat<T> {
 	private static final String CONFIG_KEY_HBASE_ROOT_DIR = "hbase.rootdir";
 	private static final String CONFIG_KEY_HBASE_CLUSTER_DISTRIBUTED = "hbase.cluster.distributed";
 	private static final String CONFIG_KEY_HBASE_ZOOKEEPER_QUORUM = "hbase.zookeeper.quorum";
+	private static final String CONFIG_KEY_BM_EXCEPTION_LISTENER_CLASS = "bm.exception.listener.class";
 
 	private String tableName;
 	private long writeBufferSize;
@@ -112,16 +114,6 @@ public class HBaseOutputFormat<T> extends RichOutputFormat<T> {
 
 	@Override
 	public void open(int taskNumber, int numberTasks) throws IOException {
-
-		final BufferedMutator.ExceptionListener listener = new BufferedMutator.ExceptionListener() {
-			@Override
-			public void onException(RetriesExhaustedWithDetailsException e, BufferedMutator mutator) {
-				for (int i = 0; i < e.getNumExceptions(); i++) {
-					LOG.info("Failed to sent put " + e.getRow(i) + ".");
-				}
-			}
-		};
-
 		// configure hbase
 		ExecutionConfig.GlobalJobParameters globalParams =
 				getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
@@ -135,8 +127,20 @@ public class HBaseOutputFormat<T> extends RichOutputFormat<T> {
 				globConf.getString(CONFIG_KEY_HBASE_ZOOKEEPER_QUORUM, null));
 		connection = ConnectionFactory.createConnection(hbaseConf);
 
-		final BufferedMutatorParams params = new BufferedMutatorParams(TableName.valueOf(tableName)).listener(listener);
-		bufferedMutator = connection.getBufferedMutator(params);
+		String bmExceptionListenerClazz =
+				globConf.getString(CONFIG_KEY_BM_EXCEPTION_LISTENER_CLASS, DefaultBMExceptionListener.class.getName());
+		LOG.info("Buffered mutator exception listener class: " + bmExceptionListenerClazz);
+		try {
+			final BufferedMutator.ExceptionListener listener = (BufferedMutator.ExceptionListener)
+					ReflectionUtil.newInstance(Class.forName(bmExceptionListenerClazz));
+			LOG.info("Buffered mutator exception listener created: " + listener);
+			final BufferedMutatorParams params =
+					new BufferedMutatorParams(TableName.valueOf(tableName))
+							.listener(listener);
+			bufferedMutator = connection.getBufferedMutator(params);
+		} catch (ClassNotFoundException e) {
+			Throwables.propagate(e);
+		}
 	}
 
 	@Override

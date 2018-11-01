@@ -11,6 +11,7 @@ import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
+import org.shirdrn.flink.connector.batch.hbase.DefaultBMExceptionListener;
 import org.shirdrn.flink.connector.batch.hbase.HBaseOutputFormat;
 import org.shirdrn.flink.connector.batch.hbase.HBaseSinkFunction;
 
@@ -29,7 +30,8 @@ public class BatchUpdateHBaseTableData {
           "--hbase-table-name <hbaseTableName> " +
           "--hbase.client.write.buffer <writeBufferSize>" +
           "--hbase.client.keyvalue.maxsize <maxKeyValueSize>" +
-          "--hbase.client.retries.number <retriesNumber>");
+          "--hbase.client.retries.number <retriesNumber>" +
+          "--bm.exception.listener.class <exceptionListenerClass>");
       return;
     }
 
@@ -60,6 +62,11 @@ public class BatchUpdateHBaseTableData {
       retriesNumber = parameterTool.getInt("hbase.client.retries.number");
     }
 
+    String bmExceptionListenerClazz = DefaultBMExceptionListener.class.getName();
+    if (parameterTool.has("bm.exception.listener.class")) {
+      bmExceptionListenerClazz = parameterTool.get("bm.exception.listener.class");
+    }
+
     // create hbase output format
     final HBaseOutputFormat<Put> outputFormat = new HBaseOutputFormat.Builder<>(hbaseSinkFunction)
             .setHBaseTableName(tableName)
@@ -73,6 +80,7 @@ public class BatchUpdateHBaseTableData {
     conf.setString("hbase.rootdir", "hdfs://namenode01.td.com/hbase");
     conf.setString("hbase.cluster.distributed", "true");
     conf.setString("hbase.zookeeper.quorum","zk01.td.com,zk02.td.com,zk03.td.com");
+    conf.setString("bm.exception.listener.class", bmExceptionListenerClazz);
     ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
     env.getConfig().setGlobalJobParameters(conf);
 
